@@ -20,6 +20,8 @@ type ContactSectionId = "contact-list"
 type CareerSectionId = "career-list"
 type AdminAreaId = "cms" | "contact-requests" | "career-applications"
 type AdminSubsectionId = CmsSectionId | ContactSectionId | CareerSectionId
+type ContactPipelineStatus = "Nuova" | "In valutazione" | "Contattata" | "Chiusa"
+type CareerPipelineStatus = "In arrivo" | "Screening" | "Colloquio" | "Archiviata"
 
 const adminAreas: Array<{ id: AdminAreaId; label: string }> = [
   { id: "cms", label: "CMS" },
@@ -43,6 +45,20 @@ const areaSubsections: Record<
   "contact-requests": [{ id: "contact-list", label: "Elenco richieste" }],
   "career-applications": [{ id: "career-list", label: "Elenco candidature" }],
 }
+
+const contactStatuses: ContactPipelineStatus[] = [
+  "Nuova",
+  "In valutazione",
+  "Contattata",
+  "Chiusa",
+]
+
+const careerStatuses: CareerPipelineStatus[] = [
+  "In arrivo",
+  "Screening",
+  "Colloquio",
+  "Archiviata",
+]
 
 const emptyForm: AdminContent = {
   heroTitle: "",
@@ -94,7 +110,22 @@ export default function AdminPage() {
     []
   )
   const [careerSubmissions, setCareerSubmissions] = useState<CareerSubmission[]>([])
+  const [selectedContact, setSelectedContact] = useState<ContactSubmission | null>(null)
   const [selectedCareer, setSelectedCareer] = useState<CareerSubmission | null>(null)
+  const [contactStatusesById, setContactStatusesById] = useState<
+    Record<string, ContactPipelineStatus>
+  >({})
+  const [careerStatusesById, setCareerStatusesById] = useState<
+    Record<string, CareerPipelineStatus>
+  >({})
+  const [contactSearch, setContactSearch] = useState("")
+  const [careerSearch, setCareerSearch] = useState("")
+  const [contactStatusFilter, setContactStatusFilter] = useState<
+    ContactPipelineStatus | "Tutte"
+  >("Tutte")
+  const [careerStatusFilter, setCareerStatusFilter] = useState<
+    CareerPipelineStatus | "Tutte"
+  >("Tutte")
 
   useEffect(() => {
     const load = async () => {
@@ -122,6 +153,13 @@ export default function AdminPage() {
       if (!response.ok) throw new Error("Impossibile caricare le richieste contatto")
       const payload = (await response.json()) as ContactSubmissionsResponse
       setContactSubmissions(payload.data)
+      setContactStatusesById((prev) => {
+        const next = { ...prev }
+        for (const item of payload.data) {
+          next[item.id] = next[item.id] ?? "Nuova"
+        }
+        return next
+      })
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -137,6 +175,13 @@ export default function AdminPage() {
       if (!response.ok) throw new Error("Impossibile caricare le candidature")
       const payload = (await response.json()) as CareerSubmissionsResponse
       setCareerSubmissions(payload.data)
+      setCareerStatusesById((prev) => {
+        const next = { ...prev }
+        for (const item of payload.data) {
+          next[item.id] = next[item.id] ?? "In arrivo"
+        }
+        return next
+      })
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Errore durante il caricamento candidature"
@@ -157,6 +202,35 @@ export default function AdminPage() {
     () => JSON.stringify(form) !== JSON.stringify(initial),
     [form, initial]
   )
+
+  const filteredContactSubmissions = useMemo(() => {
+    const query = contactSearch.trim().toLowerCase()
+    return contactSubmissions.filter((item) => {
+      const status = contactStatusesById[item.id] ?? "Nuova"
+      const statusMatch = contactStatusFilter === "Tutte" || status === contactStatusFilter
+      const searchMatch =
+        query.length === 0 ||
+        item.fullName.toLowerCase().includes(query) ||
+        item.email.toLowerCase().includes(query) ||
+        item.phone.toLowerCase().includes(query) ||
+        item.company.toLowerCase().includes(query)
+      return statusMatch && searchMatch
+    })
+  }, [contactSubmissions, contactStatusesById, contactStatusFilter, contactSearch])
+
+  const filteredCareerSubmissions = useMemo(() => {
+    const query = careerSearch.trim().toLowerCase()
+    return careerSubmissions.filter((item) => {
+      const status = careerStatusesById[item.id] ?? "In arrivo"
+      const statusMatch = careerStatusFilter === "Tutte" || status === careerStatusFilter
+      const searchMatch =
+        query.length === 0 ||
+        item.fullName.toLowerCase().includes(query) ||
+        item.email.toLowerCase().includes(query) ||
+        item.phone.toLowerCase().includes(query)
+      return statusMatch && searchMatch
+    })
+  }, [careerSubmissions, careerStatusesById, careerStatusFilter, careerSearch])
 
   const handleChange =
     (key: keyof AdminContent) =>
@@ -259,17 +333,16 @@ export default function AdminPage() {
   const activeCmsSection = activeSubsections.cms as CmsSectionId
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-white px-5 py-4 shadow-sm">
-        <p className="text-[11px] font-medium text-slate-500">
-          Backoffice
-        </p>
-        <h1 className="mt-1 text-xl font-semibold text-slate-900">Pannello amministrazione</h1>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-          <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="grid min-h-[calc(100vh-73px)] lg:grid-cols-[280px_minmax(0,1fr)]">
+      <aside className="border-r border-slate-800 bg-slate-900 p-4 text-slate-100">
+        <div className="mb-6 px-2">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-400">
+            Navigazione
+          </p>
+          <h1 className="mt-1 text-base font-semibold text-white">Admin</h1>
+        </div>
+        <div className="space-y-6">
+          <section>
             <p className="mb-2 px-2 text-[11px] font-medium text-slate-500">
               Aree
             </p>
@@ -282,8 +355,8 @@ export default function AdminPage() {
                     onClick={() => setActiveArea(area.id)}
                     className={`w-full rounded-md px-3 py-2 text-left text-sm font-medium transition-colors ${
                       active
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-700 hover:bg-slate-100"
+                        ? "bg-blue-600 text-white"
+                        : "text-slate-200 hover:bg-slate-800"
                     }`}
                   >
                     {area.label}
@@ -293,7 +366,7 @@ export default function AdminPage() {
             </nav>
           </section>
 
-          <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+          <section>
             <p className="mb-2 px-2 text-[11px] font-medium text-slate-500">
               Sottosezioni
             </p>
@@ -311,8 +384,8 @@ export default function AdminPage() {
                     }
                     className={`w-full rounded-md px-3 py-2 text-left text-sm font-medium transition-colors ${
                       active
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-700 hover:bg-slate-100"
+                        ? "bg-blue-600 text-white"
+                        : "text-slate-200 hover:bg-slate-800"
                     }`}
                   >
                     {subsection.label}
@@ -323,11 +396,11 @@ export default function AdminPage() {
           </section>
 
           {activeArea === "cms" && (
-            <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs text-slate-600">
+            <section className="rounded-md border border-slate-700 bg-slate-800/60 p-3">
+              <p className="text-xs text-slate-300">
                 {hasChanges ? "Modifiche non salvate" : "Tutto salvato"}
               </p>
-              <p className="mt-1 text-[11px] text-slate-500">
+              <p className="mt-1 text-[11px] text-slate-400">
                 Ultimo salvataggio: {lastSavedLabel}
               </p>
               <button
@@ -339,10 +412,11 @@ export default function AdminPage() {
               </button>
             </section>
           )}
-        </aside>
+        </div>
+      </aside>
 
-        <div className="space-y-6">
-          <div className="rounded-lg border border-slate-200 bg-white px-5 py-4 shadow-sm">
+      <div className="space-y-6 bg-slate-100 p-6">
+          <div className="rounded-lg border border-slate-200 bg-white px-5 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-slate-900">
@@ -554,39 +628,93 @@ export default function AdminPage() {
 
           {activeArea === "contact-requests" && (
             <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-              {contactSubmissions.length === 0 ? (
+              <div className="mb-4 grid gap-3 md:grid-cols-[1fr_220px]">
+                <input
+                  value={contactSearch}
+                  onChange={(event) => setContactSearch(event.target.value)}
+                  placeholder="Cerca per nome, email, telefono, azienda..."
+                  className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+                <select
+                  value={contactStatusFilter}
+                  onChange={(event) =>
+                    setContactStatusFilter(
+                      event.target.value as ContactPipelineStatus | "Tutte"
+                    )
+                  }
+                  className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="Tutte">Tutti gli status</option>
+                  {contactStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {filteredContactSubmissions.length === 0 ? (
                 <p className="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-600">
                   Nessuna richiesta contatto ricevuta al momento.
                 </p>
               ) : (
-                <div className="space-y-3">
-                  {contactSubmissions.map((item) => (
-                    <article
-                      key={item.id}
-                      className="rounded-md border border-slate-200 bg-slate-50 p-4"
-                    >
-                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                        <h3 className="font-medium text-slate-900">{item.fullName}</h3>
-                        <span className="text-[11px] text-slate-500">
-                          {new Date(item.createdAt).toLocaleString("it-IT")}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-600">
-                        {item.email} · {item.phone}
-                      </p>
-                      {item.company && (
-                        <p className="mt-1 text-sm text-slate-600">
-                          Azienda: {item.company}
-                        </p>
-                      )}
-                      {item.city && (
-                        <p className="mt-1 text-sm text-slate-600">
-                          Città: {item.city}
-                        </p>
-                      )}
-                      <p className="mt-2 text-sm text-slate-800">{item.message}</p>
-                    </article>
-                  ))}
+                <div className="overflow-x-auto rounded-md border border-slate-200">
+                  <table className="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Nome</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Contatto</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Azienda</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Status</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Data</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Azioni</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {filteredContactSubmissions.map((item) => (
+                        <tr key={item.id}>
+                          <td className="px-3 py-2 text-slate-900">{item.fullName}</td>
+                          <td className="px-3 py-2 text-slate-600">
+                            {item.email}
+                            <br />
+                            {item.phone}
+                          </td>
+                          <td className="px-3 py-2 text-slate-600">
+                            {item.company || "—"}
+                          </td>
+                          <td className="px-3 py-2">
+                            <select
+                              value={contactStatusesById[item.id] ?? "Nuova"}
+                              onChange={(event) =>
+                                setContactStatusesById((prev) => ({
+                                  ...prev,
+                                  [item.id]: event.target.value as ContactPipelineStatus,
+                                }))
+                              }
+                              className="h-8 rounded border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none focus:border-blue-500"
+                            >
+                              {contactStatuses.map((status) => (
+                                <option key={status} value={status}>
+                                  {status}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-3 py-2 text-slate-600">
+                            {new Date(item.createdAt).toLocaleDateString("it-IT")}
+                          </td>
+                          <td className="px-3 py-2">
+                            <button
+                              onClick={() => setSelectedContact(item)}
+                              className="rounded border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                            >
+                              Apri
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </section>
@@ -594,54 +722,125 @@ export default function AdminPage() {
 
           {activeArea === "career-applications" && (
             <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-              {careerSubmissions.length === 0 ? (
+              <div className="mb-4 grid gap-3 md:grid-cols-[1fr_220px]">
+                <input
+                  value={careerSearch}
+                  onChange={(event) => setCareerSearch(event.target.value)}
+                  placeholder="Cerca per nome, email, telefono..."
+                  className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+                <select
+                  value={careerStatusFilter}
+                  onChange={(event) =>
+                    setCareerStatusFilter(
+                      event.target.value as CareerPipelineStatus | "Tutte"
+                    )
+                  }
+                  className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="Tutte">Tutti gli status</option>
+                  {careerStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {filteredCareerSubmissions.length === 0 ? (
                 <p className="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-600">
                   Nessuna candidatura ricevuta al momento.
                 </p>
               ) : (
-                <div className="space-y-3">
-                  {careerSubmissions.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => setSelectedCareer(item)}
-                      className="w-full rounded-md border border-slate-200 bg-slate-50 p-4 text-left transition-colors hover:border-slate-400"
-                    >
-                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={item.profilePhotoDataUrl}
-                            alt={`Foto profilo ${item.fullName}`}
-                            className="h-12 w-12 rounded-full object-cover ring-1 ring-border"
-                          />
-                          <h3 className="font-medium text-slate-900">{item.fullName}</h3>
-                        </div>
-                        <span className="text-[11px] text-slate-500">
-                          {new Date(item.createdAt).toLocaleString("it-IT")}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-600">
-                        {item.email} · {item.phone}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        Età: {item.age} · Disponibilità: {item.availability}
-                      </p>
-                      {item.city && (
-                        <p className="mt-1 text-sm text-slate-600">Città: {item.city}</p>
-                      )}
-                      {item.cvFileName && (
-                        <p className="mt-1 text-sm text-slate-600">CV: {item.cvFileName}</p>
-                      )}
-                      {item.message && (
-                        <p className="mt-2 text-sm text-slate-800">{item.message}</p>
-                      )}
-                    </button>
-                  ))}
+                <div className="overflow-x-auto rounded-md border border-slate-200">
+                  <table className="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Candidato</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Contatto</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Disponibilità</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Status</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Data</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {filteredCareerSubmissions.map((item) => (
+                        <tr
+                          key={item.id}
+                          onClick={() => setSelectedCareer(item)}
+                          className="cursor-pointer hover:bg-slate-50"
+                        >
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={item.profilePhotoDataUrl}
+                                alt={`Foto profilo ${item.fullName}`}
+                                className="h-9 w-9 rounded-full object-cover ring-1 ring-slate-300"
+                              />
+                              <span className="font-medium text-slate-900">{item.fullName}</span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 text-slate-600">
+                            {item.email}
+                            <br />
+                            {item.phone}
+                          </td>
+                          <td className="px-3 py-2 text-slate-600">{item.availability}</td>
+                          <td className="px-3 py-2">
+                            <select
+                              value={careerStatusesById[item.id] ?? "In arrivo"}
+                              onClick={(event) => event.stopPropagation()}
+                              onChange={(event) =>
+                                setCareerStatusesById((prev) => ({
+                                  ...prev,
+                                  [item.id]: event.target.value as CareerPipelineStatus,
+                                }))
+                              }
+                              className="h-8 rounded border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none focus:border-blue-500"
+                            >
+                              {careerStatuses.map((status) => (
+                                <option key={status} value={status}>
+                                  {status}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-3 py-2 text-slate-600">
+                            {new Date(item.createdAt).toLocaleDateString("it-IT")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </section>
           )}
-        </div>
       </div>
+      <Dialog
+        open={Boolean(selectedContact)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedContact(null)
+        }}
+      >
+        <DialogContent className="max-w-2xl border-slate-200 bg-white">
+          {selectedContact && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedContact.fullName}</DialogTitle>
+                <DialogDescription>
+                  {selectedContact.email} · {selectedContact.phone}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                {selectedContact.company && <p>Azienda: {selectedContact.company}</p>}
+                {selectedContact.city && <p>Città: {selectedContact.city}</p>}
+                <p className="pt-2 text-slate-900">{selectedContact.message}</p>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={Boolean(selectedCareer)}

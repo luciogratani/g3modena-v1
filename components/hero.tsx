@@ -29,7 +29,7 @@ export function Hero() {
         }}
       />
       {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-foreground64" />
+      <div className="absolute inset-0 bg-foreground/60" />
 
       <motion.div
         variants={staggerContainer}
