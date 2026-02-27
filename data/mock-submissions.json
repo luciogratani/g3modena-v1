@@ -1,0 +1,81 @@
+{
+  "contactSubmissions": [
+    {
+      "id": "c-001",
+      "createdAt": "2026-02-17T09:42:00.000Z",
+      "fullName": "Giulia Bianchi",
+      "company": "Tenuta San Martino Eventi",
+      "email": "giulia.bianchi@tenutasanmartino.it",
+      "phone": "+39 347 1122334",
+      "city": "Bologna",
+      "message": "Stiamo organizzando un ricevimento privato per 120 ospiti a maggio. Vorremmo un servizio di sala completo con coordinamento durante la serata."
+    },
+    {
+      "id": "c-002",
+      "createdAt": "2026-02-17T14:18:00.000Z",
+      "fullName": "Lorenzo Conti",
+      "company": "Atelier Gastronomico Conti",
+      "email": "l.conti@atelierconti.it",
+      "phone": "+39 331 5566778",
+      "city": "Modena",
+      "message": "Cerchiamo supporto per un evento corporate di due giorni con servizio aperitivo, cena placée e staff di accoglienza."
+    },
+    {
+      "id": "c-003",
+      "createdAt": "2026-02-18T08:55:00.000Z",
+      "fullName": "Elena Rossi",
+      "company": "Studio Rossi Wedding Planner",
+      "email": "elena.rossi@studiowedding.it",
+      "phone": "+39 340 9988776",
+      "city": "Parma",
+      "message": "Per un matrimonio in villa a luglio avremmo bisogno di personale di sala con esperienza in eventi luxury e gestione tempistiche serrate."
+    }
+  ],
+  "careerSubmissions": [
+    {
+      "id": "j-001",
+      "createdAt": "2026-02-16T11:07:00.000Z",
+      "fullName": "Matteo Rinaldi",
+      "email": "matteo.rinaldi@email.com",
+      "phone": "+39 348 2233445",
+      "age": "24",
+      "city": "Reggio Emilia",
+      "availability": "Weekend e serale infrasettimanale",
+      "profilePhotoFileName": "Matteo_Rinaldi_Foto.jpg",
+      "profilePhotoDataUrl": "https://i.pravatar.cc/160?img=12",
+      "cvFileName": "CV_Matteo_Rinaldi.pdf",
+      "cvPreviewUrl": "/vc_facsimile.pdf",
+      "message": "Ho esperienza come cameriere in ristorazione fine dining e in eventi privati. Disponibile da subito per prova operativa."
+    },
+    {
+      "id": "j-002",
+      "createdAt": "2026-02-17T16:32:00.000Z",
+      "fullName": "Sara Moretti",
+      "email": "sara.moretti@email.com",
+      "phone": "+39 333 4455667",
+      "age": "22",
+      "city": "Modena",
+      "availability": "Part-time, dal venerdì alla domenica",
+      "profilePhotoFileName": "Sara_Moretti_Foto.png",
+      "profilePhotoDataUrl": "https://i.pravatar.cc/160?img=5",
+      "cvFileName": "Sara_Moretti_CV.pdf",
+      "cvPreviewUrl": "/vc_facsimile.pdf",
+      "message": "Studentessa universitaria con esperienza in catering ed eventi aziendali. Ottime capacità relazionali con il cliente."
+    },
+    {
+      "id": "j-003",
+      "createdAt": "2026-02-18T10:21:00.000Z",
+      "fullName": "Davide Ferretti",
+      "email": "d.ferretti@email.com",
+      "phone": "+39 320 6677889",
+      "age": "27",
+      "city": "Sassuolo",
+      "availability": "Full-time, trasferte su richiesta",
+      "profilePhotoFileName": "Davide_Ferretti_Foto.jpg",
+      "profilePhotoDataUrl": "https://i.pravatar.cc/160?img=33",
+      "cvFileName": "Ferretti_Davide_CV_2026.pdf",
+      "cvPreviewUrl": "/vc_facsimile.pdf",
+      "message": "Caposala junior con 4 anni di esperienza in banqueting. Interessato a ruoli con responsabilità di coordinamento team."
+    }
+  ]
+}
